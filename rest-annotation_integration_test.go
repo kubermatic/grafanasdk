@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana-tools/sdk"
+	sdk "k8c.io/kubermatic/grafanasdk"
 )
 
 func TestAnnotations(t *testing.T) {
