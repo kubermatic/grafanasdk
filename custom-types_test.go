@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana-tools/sdk"
+	sdk "k8c.io/kubermatic/grafanasdk"
 )
 
 func TestIntString_Unmarshal(t *testing.T) {

@@ -24,7 +24,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/grafana-tools/sdk"
+	sdk "k8c.io/kubermatic/grafanasdk"
 )
 
 func TestUnmarshal_NewEmptyDashboard26(t *testing.T) {

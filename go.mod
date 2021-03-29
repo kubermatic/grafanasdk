@@ -1,4 +1,4 @@
-module github.com/grafana-tools/sdk
+module k8c.io/kubermatic/grafanasdk
 
 go 1.13
 
