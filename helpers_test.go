@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana-tools/sdk"
+	sdk "github.com/kubermatic/grafanasdk"
 )
 
 func getDebugURL(t *testing.T) string {
