@@ -22,7 +22,7 @@ package sdk_test
 import (
 	"testing"
 
-	"github.com/grafana-tools/sdk"
+	sdk "github.com/kubermatic/grafanasdk"
 )
 
 func TestAddTags(t *testing.T) {
@@ -92,14 +92,14 @@ func TestBoardHasTag_TagNotExists(t *testing.T) {
 }
 
 func TestBoardAddLink(t *testing.T) {
-  b := sdk.NewBoard("Sample")
-  b.AddLink(sdk.Link {
-    Title: "test",
-    Type: "external_link",
-    IncludeVars: false,
-  })
+	b := sdk.NewBoard("Sample")
+	b.AddLink(sdk.Link{
+		Title:       "test",
+		Type:        "external_link",
+		IncludeVars: false,
+	})
 
-  if len(b.Links) != 1 {
+	if len(b.Links) != 1 {
 		t.Error("Link wasn't added")
-  }
+	}
 }
