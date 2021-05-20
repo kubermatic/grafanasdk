@@ -73,6 +73,34 @@ func (r *Client) GetUser(ctx context.Context, id uint) (User, error) {
 	return user, err
 }
 
+// LookupUser gets single user by Username(login) or Email.
+// Reflects GET /api/users/lookup?loginOrEmail=:loginOrEmail API call.
+func (r *Client) LookupUser(ctx context.Context, loginOrEmail string) (User, error) {
+	var (
+		raw  []byte
+		user User
+		code int
+		err  error
+	)
+	params := url.Values{}
+	params["loginOrEmail"] = []string{loginOrEmail}
+	if raw, code, err = r.get(ctx, "api/users/lookup", params); err != nil {
+		return user, err
+	}
+	if code == 404 {
+		return user, ErrNotFound{Message: fmt.Sprintf("User with loginOrEmail %s not found", loginOrEmail)}
+	}
+	if code != 200 {
+		return user, fmt.Errorf("HTTP error %d: returns %s", code, raw)
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	if err := dec.Decode(&user); err != nil {
+		return user, fmt.Errorf("unmarshal user: %s\n%s", err, raw)
+	}
+	return user, err
+}
+
 // GetAllUsers gets all users.
 // Reflects GET /api/users API call.
 func (r *Client) GetAllUsers(ctx context.Context) ([]User, error) {

@@ -27,6 +27,21 @@ func (r *Client) CreateUser(ctx context.Context, user User) (StatusMessage, erro
 	return resp, nil
 }
 
+// DeleteGlobalUser deletes an existing user by ID.
+// Reflects DELETE /api/admin/users/:uid API call.
+func (r *Client) DeleteGlobalUser(ctx context.Context, uid uint) (StatusMessage, error) {
+	var (
+		raw   []byte
+		reply StatusMessage
+		err   error
+	)
+	if raw, _, err = r.delete(ctx, fmt.Sprintf("api/admin/users/%d", uid)); err != nil {
+		return StatusMessage{}, err
+	}
+	err = json.Unmarshal(raw, &reply)
+	return reply, err
+}
+
 // UpdateUserPermissions updates the permissions of a global user.
 // Requires basic authentication and that the authenticated user is a Grafana Admin.
 // Reflects PUT /api/admin/users/:userId/password API call.
