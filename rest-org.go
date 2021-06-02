@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // CreateOrg creates a new organization.
@@ -127,7 +128,9 @@ func (r *Client) GetOrgByOrgName(ctx context.Context, name string) (Org, error) 
 		code int
 		err  error
 	)
-	if raw, code, err = r.get(ctx, fmt.Sprintf("api/orgs/name/%s", name), nil); err != nil {
+	path := fmt.Sprintf("api/orgs/name/%s", name)
+	rawPath := fmt.Sprintf("api/orgs/name/%s", url.PathEscape(name))
+	if raw, code, err = r.getWithRawPath(ctx, path, rawPath, nil); err != nil {
 		return org, err
 	}
 

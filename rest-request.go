@@ -92,28 +92,35 @@ func NewClient(apiURL, apiKeyOrBasicAuth string, client *http.Client) *Client {
 }
 
 func (r *Client) get(ctx context.Context, query string, params url.Values) ([]byte, int, error) {
-	return r.doRequest(ctx, "GET", query, params, nil)
+	return r.doRequest(ctx, "GET", query, "", params, nil)
+}
+
+func (r *Client) getWithRawPath(ctx context.Context, query, rawPath string, params url.Values) ([]byte, int, error) {
+	return r.doRequest(ctx, "GET", query, rawPath, params, nil)
 }
 
 func (r *Client) patch(ctx context.Context, query string, params url.Values, body []byte) ([]byte, int, error) {
-	return r.doRequest(ctx, "PATCH", query, params, bytes.NewBuffer(body))
+	return r.doRequest(ctx, "PATCH", query, "", params, bytes.NewBuffer(body))
 }
 
 func (r *Client) put(ctx context.Context, query string, params url.Values, body []byte) ([]byte, int, error) {
-	return r.doRequest(ctx, "PUT", query, params, bytes.NewBuffer(body))
+	return r.doRequest(ctx, "PUT", query, "", params, bytes.NewBuffer(body))
 }
 
 func (r *Client) post(ctx context.Context, query string, params url.Values, body []byte) ([]byte, int, error) {
-	return r.doRequest(ctx, "POST", query, params, bytes.NewBuffer(body))
+	return r.doRequest(ctx, "POST", query, "", params, bytes.NewBuffer(body))
 }
 
 func (r *Client) delete(ctx context.Context, query string) ([]byte, int, error) {
-	return r.doRequest(ctx, "DELETE", query, nil, nil)
+	return r.doRequest(ctx, "DELETE", query, "", nil, nil)
 }
 
-func (r *Client) doRequest(ctx context.Context, method, query string, params url.Values, buf io.Reader) ([]byte, int, error) {
+func (r *Client) doRequest(ctx context.Context, method, query, rawPath string, params url.Values, buf io.Reader) ([]byte, int, error) {
 	u, _ := url.Parse(r.baseURL)
 	u.Path = path.Join(u.Path, query)
+	if rawPath != "" {
+		u.RawPath = path.Join(u.RawPath, rawPath)
+	}
 	if params != nil {
 		u.RawQuery = params.Encode()
 	}
