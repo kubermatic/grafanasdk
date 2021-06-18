@@ -63,6 +63,17 @@ func (r *Client) SetOrgIDHeader(oid uint) {
 	r.SetCustomHeader("X-Grafana-Org-Id", strconv.FormatUint(uint64(oid), 10))
 }
 
+func (r *Client) WithOrgIDHeader(oid uint) *Client {
+	c := &Client{
+		baseURL:   r.baseURL,
+		key:       r.key,
+		basicAuth: r.basicAuth,
+		client:    r.client,
+	}
+	c.SetOrgIDHeader(oid)
+	return c
+}
+
 // StatusMessage reflects status message as it returned by Grafana REST API.
 type StatusMessage struct {
 	ID      *uint   `json:"id"`
