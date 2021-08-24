@@ -36,7 +36,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana-tools/sdk"
+	sdk "github.com/kubermatic/grafanasdk"
 )
 
 func main() {

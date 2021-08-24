@@ -31,7 +31,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/grafana-tools/sdk"
+	sdk "github.com/kubermatic/grafanasdk"
 )
 
 func main() {
