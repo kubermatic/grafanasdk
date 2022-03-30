@@ -25,7 +25,6 @@ type Datasource struct {
 	ID                uint        `json:"id"`
 	UID               string      `json:"uid"`
 	OrgID             uint        `json:"orgId"`
-	UID               string      `json:"uid"`
 	Name              string      `json:"name"`
 	Type              string      `json:"type"`
 	TypeLogoURL       string      `json:"typeLogoUrl"`
