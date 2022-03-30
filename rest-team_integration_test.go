@@ -3,8 +3,9 @@ package sdk_test
 import (
 	"context"
 	"fmt"
-	"github.com/grafana-tools/sdk"
 	"testing"
+
+	sdk "github.com/kubermatic/grafanasdk"
 )
 
 func Test_Team_CRUD(t *testing.T) {
