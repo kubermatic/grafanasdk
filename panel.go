@@ -20,6 +20,7 @@ package sdk
 */
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 )
@@ -38,6 +39,7 @@ const (
 	RowType
 	BarGaugeType
 	HeatmapType
+	TimeseriesType
 )
 
 const MixedSource = "-- Mixed --"
@@ -59,6 +61,7 @@ type (
 		*AlertlistPanel
 		*BarGaugePanel
 		*HeatmapPanel
+		*TimeseriesPanel
 		*CustomPanel
 	}
 	panelType   int8
@@ -133,7 +136,7 @@ type (
 		Bars        bool        `json:"bars"`
 		DashLength  *uint       `json:"dashLength,omitempty"`
 		Dashes      *bool       `json:"dashes,omitempty"`
-		Decimals    *int       `json:"decimals,omitempty"`
+		Decimals    *int        `json:"decimals,omitempty"`
 		Fill        int         `json:"fill"`
 		//		Grid        grid        `json:"grid"` obsoleted in 4.1 by xaxis and yaxis
 
@@ -160,18 +163,10 @@ type (
 		YFormats        []string         `json:"y_formats,omitempty"`
 		Xaxis           Axis             `json:"xaxis"` // was added in Grafana 4.x?
 		Yaxes           []Axis           `json:"yaxes"` // was added in Grafana 4.x?
+		FieldConfig     *FieldConfig     `json:"fieldConfig,omitempty"`
 	}
 	FieldConfig struct {
-		Defaults struct {
-			Unit      string `json:"unit"`
-			Threshold struct {
-				Mode  string `json:"mode"`
-				Steps []struct {
-					Color string `json:"color"`
-					Value string `json:"value"`
-				} `json:"steps"`
-			} `json:"threshold"`
-		} `json:"defaults"`
+		Defaults FieldConfigDefaults `json:"defaults"`
 	}
 	Options struct {
 		Orientation   string `json:"orientation"`
@@ -258,28 +253,29 @@ type (
 		ValueName       string      `json:"valueName"`
 	}
 	StatPanel struct {
-		Colors          []string    `json:"colors"`
-		ColorValue      bool        `json:"colorValue"`
-		ColorBackground bool        `json:"colorBackground"`
-		Decimals        int         `json:"decimals"`
-		Format          string      `json:"format"`
-		Gauge           Gauge       `json:"gauge,omitempty"`
-		MappingType     *uint       `json:"mappingType,omitempty"`
-		MappingTypes    []*MapType  `json:"mappingTypes,omitempty"`
-		MaxDataPoints   *IntString  `json:"maxDataPoints,omitempty"`
-		NullPointMode   string      `json:"nullPointMode"`
-		Postfix         *string     `json:"postfix,omitempty"`
-		PostfixFontSize *string     `json:"postfixFontSize,omitempty"`
-		Prefix          *string     `json:"prefix,omitempty"`
-		PrefixFontSize  *string     `json:"prefixFontSize,omitempty"`
-		RangeMaps       []*RangeMap `json:"rangeMaps,omitempty"`
-		SparkLine       SparkLine   `json:"sparkline,omitempty"`
-		Targets         []Target    `json:"targets,omitempty"`
-		Thresholds      string      `json:"thresholds"`
-		ValueFontSize   string      `json:"valueFontSize"`
-		ValueMaps       []ValueMap  `json:"valueMaps"`
-		ValueName       string      `json:"valueName"`
-		Options         Options     `json:"options"`
+		Colors          []string     `json:"colors"`
+		ColorValue      bool         `json:"colorValue"`
+		ColorBackground bool         `json:"colorBackground"`
+		Decimals        int          `json:"decimals"`
+		Format          string       `json:"format"`
+		FieldConfig     *FieldConfig `json:"fieldConfig,omitempty"`
+		Gauge           Gauge        `json:"gauge,omitempty"`
+		MappingType     *uint        `json:"mappingType,omitempty"`
+		MappingTypes    []*MapType   `json:"mappingTypes,omitempty"`
+		MaxDataPoints   *IntString   `json:"maxDataPoints,omitempty"`
+		NullPointMode   string       `json:"nullPointMode"`
+		Postfix         *string      `json:"postfix,omitempty"`
+		PostfixFontSize *string      `json:"postfixFontSize,omitempty"`
+		Prefix          *string      `json:"prefix,omitempty"`
+		PrefixFontSize  *string      `json:"prefixFontSize,omitempty"`
+		RangeMaps       []*RangeMap  `json:"rangeMaps,omitempty"`
+		SparkLine       SparkLine    `json:"sparkline,omitempty"`
+		Targets         []Target     `json:"targets,omitempty"`
+		Thresholds      string       `json:"thresholds"`
+		ValueFontSize   string       `json:"valueFontSize"`
+		ValueMaps       []ValueMap   `json:"valueMaps"`
+		ValueName       string       `json:"valueName"`
+		Options         Options      `json:"options"`
 	}
 	DashlistPanel struct {
 		Mode     string   `json:"mode"`
@@ -357,6 +353,80 @@ type (
 		YBucketBound  string   `json:"yBucketBound"`
 		YBucketNumber *float64 `json:"yBucketNumber"`
 		YBucketSize   *float64 `json:"yBucketSize"`
+	}
+	TimeseriesPanel struct {
+		Targets     []Target          `json:"targets,omitempty"`
+		Options     TimeseriesOptions `json:"options"`
+		FieldConfig FieldConfig       `json:"fieldConfig"`
+	}
+	TimeseriesOptions struct {
+		Legend  TimeseriesLegendOptions  `json:"legend,omitempty"`
+		Tooltip TimeseriesTooltipOptions `json:"tooltip,omitempty"`
+	}
+	TimeseriesLegendOptions struct {
+		Calcs       []string `json:"calcs"`
+		DisplayMode string   `json:"displayMode"`
+		Placement   string   `json:"placement"`
+	}
+	TimeseriesTooltipOptions struct {
+		Mode string `json:"mode"`
+	}
+	FieldConfigDefaults struct {
+		Unit       string            `json:"unit"`
+		Decimals   *int              `json:"decimals,omitempty"`
+		Min        *int              `json:"min,omitempty"`
+		Max        *int              `json:"max,omitempty"`
+		Color      FieldConfigColor  `json:"color,omitempty"`
+		Thresholds Thresholds        `json:"thresholds"`
+		Custom     FieldConfigCustom `json:"custom"`
+		Links      []Link            `json:"links,omitempty"`
+	}
+	FieldConfigCustom struct {
+		AxisLabel         string `json:"axisLabel,omitempty"`
+		AxisPlacement     string `json:"axisPlacement"`
+		AxisSoftMin       *int   `json:"axisSoftMin,omitempty"`
+		AxisSoftMax       *int   `json:"axisSoftMax,omitempty"`
+		BarAlignment      int    `json:"barAlignment"`
+		DrawStyle         string `json:"drawStyle"`
+		FillOpacity       int    `json:"fillOpacity"`
+		GradientMode      string `json:"gradientMode"`
+		LineInterpolation string `json:"lineInterpolation"`
+		LineWidth         int    `json:"lineWidth"`
+		PointSize         int    `json:"pointSize"`
+		ShowPoints        string `json:"showPoints"`
+		SpanNulls         bool   `json:"spanNulls"`
+		HideFrom          struct {
+			Legend  bool `json:"legend"`
+			Tooltip bool `json:"tooltip"`
+			Viz     bool `json:"viz"`
+		} `json:"hideFrom"`
+		LineStyle struct {
+			Fill string `json:"fill"`
+		} `json:"lineStyle"`
+		ScaleDistribution struct {
+			Type string `json:"type"`
+			Log  int    `json:"log,omitempty"`
+		} `json:"scaleDistribution"`
+		Stacking struct {
+			Group string `json:"group"`
+			Mode  string `json:"mode"`
+		} `json:"stacking"`
+		ThresholdsStyle struct {
+			Mode string `json:"mode"`
+		} `json:"thresholdsStyle"`
+	}
+	Thresholds struct {
+		Mode  string          `json:"mode"`
+		Steps []ThresholdStep `json:"steps"`
+	}
+	ThresholdStep struct {
+		Color string `json:"color"`
+		Value *int   `json:"value"`
+	}
+	FieldConfigColor struct {
+		Mode       string `json:"mode"`
+		FixedColor string `json:"fixedColor,omitempty"`
+		SeriesBy   string `json:"seriesBy,omitempty"`
 	}
 	CustomPanel map[string]interface{}
 )
@@ -442,7 +512,7 @@ type (
 		Type            string     `json:"type"`
 		ColorMode       *string    `json:"colorMode,omitempty"`
 		Colors          *[]string  `json:"colors,omitempty"`
-		Decimals        *int      `json:"decimals,omitempty"`
+		Decimals        *int       `json:"decimals,omitempty"`
 		Thresholds      *[]string  `json:"thresholds,omitempty"`
 		Unit            *string    `json:"unit,omitempty"`
 		MappingType     int        `json:"mappingType,omitempty"`
@@ -563,7 +633,12 @@ type Target struct {
 	CrossSeriesReducer string                    `json:"crossSeriesReducer,omitempty"`
 	PerSeriesAligner   string                    `json:"perSeriesAligner,omitempty"`
 	ValueType          string                    `json:"valueType,omitempty"`
-	GroupBys           []string                  `json:"groupBys,omitempty"`
+	GroupBy            []string                  `json:"groupBy,omitempty"`
+	Tags               []struct {
+		Key      string `json:"key,omitempty"`
+		Operator string `json:"operator,omitempty"`
+		Value    string `json:"value,omitempty"`
+	} `json:"tags,omitempty"`
 }
 
 // StackdriverAlignOptions defines the list of alignment options shown in
@@ -633,6 +708,34 @@ func NewGraph(title string) *Panel {
 		}}
 }
 
+// NewTimeseries initializes panel with a timeseries panel.
+func NewTimeseries(title string) *Panel {
+	if title == "" {
+		title = "Panel Title"
+	}
+
+	return &Panel{
+		CommonPanel: CommonPanel{
+			OfType: TimeseriesType,
+			Title:  title,
+			Type:   "timeseries",
+			Span:   12,
+			IsNew:  true,
+		},
+		TimeseriesPanel: &TimeseriesPanel{
+			FieldConfig: FieldConfig{
+				Defaults: FieldConfigDefaults{
+					Color: FieldConfigColor{
+						Mode:       "palette-classic",
+						FixedColor: "green",
+						SeriesBy:   "last",
+					},
+				},
+			},
+		},
+	}
+}
+
 // NewTable initializes panel with a table panel.
 func NewTable(title string) *Panel {
 	if title == "" {
@@ -694,7 +797,16 @@ func NewStat(title string) *Panel {
 			Type:     "stat",
 			Renderer: &render,
 			IsNew:    true},
-		StatPanel: &StatPanel{}}
+		StatPanel: &StatPanel{
+			FieldConfig: &FieldConfig{
+				Defaults: FieldConfigDefaults{
+					Color: FieldConfigColor{
+						Mode: "thresholds",
+					},
+				},
+			},
+		},
+	}
 }
 
 // NewPluginlist initializes panel with a stat panel.
@@ -774,6 +886,8 @@ func (p *Panel) ResetTargets() {
 		p.BarGaugePanel.Targets = nil
 	case HeatmapType:
 		p.HeatmapPanel.Targets = nil
+	case TimeseriesType:
+		p.TimeseriesPanel.Targets = nil
 	}
 }
 
@@ -793,6 +907,8 @@ func (p *Panel) AddTarget(t *Target) {
 		p.TablePanel.Targets = append(p.TablePanel.Targets, *t)
 	case HeatmapType:
 		p.HeatmapPanel.Targets = append(p.HeatmapPanel.Targets, *t)
+	case TimeseriesType:
+		p.TimeseriesPanel.Targets = append(p.TimeseriesPanel.Targets, *t)
 	}
 	// TODO check for existing refID
 }
@@ -820,6 +936,8 @@ func (p *Panel) SetTarget(t *Target) {
 		setTarget(t, &p.TablePanel.Targets)
 	case HeatmapType:
 		setTarget(t, &p.HeatmapPanel.Targets)
+	case TimeseriesType:
+		setTarget(t, &p.TimeseriesPanel.Targets)
 	}
 }
 
@@ -851,6 +969,8 @@ func (p *Panel) RepeatDatasourcesForEachTarget(dsNames ...string) {
 		repeatDS(dsNames, &p.TablePanel.Targets)
 	case HeatmapType:
 		repeatDS(dsNames, &p.HeatmapPanel.Targets)
+	case TimeseriesType:
+		repeatDS(dsNames, &p.TimeseriesPanel.Targets)
 	}
 }
 
@@ -885,6 +1005,8 @@ func (p *Panel) RepeatTargetsForDatasources(dsNames ...string) {
 		repeatTarget(dsNames, &p.TablePanel.Targets)
 	case HeatmapType:
 		repeatTarget(dsNames, &p.HeatmapPanel.Targets)
+	case TimeseriesType:
+		repeatTarget(dsNames, &p.TimeseriesPanel.Targets)
 	}
 }
 
@@ -904,6 +1026,8 @@ func (p *Panel) GetTargets() *[]Target {
 		return &p.BarGaugePanel.Targets
 	case HeatmapType:
 		return &p.HeatmapPanel.Targets
+	case TimeseriesType:
+		return &p.TimeseriesPanel.Targets
 	default:
 		return nil
 	}
@@ -966,6 +1090,12 @@ func (p *Panel) UnmarshalJSON(b []byte) (err error) {
 			p.OfType = HeatmapType
 			if err = json.Unmarshal(b, &heatmap); err == nil {
 				p.HeatmapPanel = &heatmap
+			}
+		case "timeseries":
+			var timeseries TimeseriesPanel
+			p.OfType = TimeseriesType
+			if err = json.Unmarshal(b, &timeseries); err == nil {
+				p.TimeseriesPanel = &timeseries
 			}
 		case "row":
 			var rowpanel RowPanel
@@ -1052,14 +1182,47 @@ func (p *Panel) MarshalJSON() ([]byte, error) {
 			HeatmapPanel
 		}{p.CommonPanel, *p.HeatmapPanel}
 		return json.Marshal(outHeatmap)
-	case CustomType:
-		var outCustom = struct {
+	case TimeseriesType:
+		var outTimeseries = struct {
 			CommonPanel
-			CustomPanel
-		}{p.CommonPanel, *p.CustomPanel}
+			TimeseriesPanel
+		}{p.CommonPanel, *p.TimeseriesPanel}
+		return json.Marshal(outTimeseries)
+	case CustomType:
+		var outCustom = customPanelOutput{
+			p.CommonPanel,
+			*p.CustomPanel,
+		}
 		return json.Marshal(outCustom)
 	}
 	return nil, errors.New("can't marshal unknown panel type")
+}
+
+type customPanelOutput struct {
+	CommonPanel
+	CustomPanel
+}
+
+func (c customPanelOutput) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(c.CommonPanel)
+	if err != nil {
+		return b, err
+	}
+	// Append custom keys to marshalled CommonPanel.
+	buf := bytes.NewBuffer(b[:len(b)-1])
+
+	for k, v := range c.CustomPanel {
+		buf.WriteString(`,"`)
+		buf.WriteString(k)
+		buf.WriteString(`":`)
+		b, err := json.Marshal(v)
+		if err != nil {
+			return b, err
+		}
+		buf.Write(b)
+	}
+	buf.WriteString("}")
+	return buf.Bytes(), nil
 }
 
 func incRefID(refID string) string {
