@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 // CreateUser creates a new global user.
@@ -34,10 +35,17 @@ func (r *Client) DeleteUser(ctx context.Context, uid uint) (StatusMessage, error
 	var (
 		raw  []byte
 		resp StatusMessage
+		code int
 		err  error
 	)
-	if raw, _, err = r.delete(ctx, fmt.Sprintf("api/admin/users/%d", uid)); err != nil {
+	if raw, code, err = r.delete(ctx, fmt.Sprintf("api/admin/users/%d", uid)); err != nil {
 		return StatusMessage{}, err
+	}
+	if code == http.StatusNotFound {
+		return StatusMessage{}, ErrNotFound{Message: fmt.Sprintf("User with ID %d not found", uid)}
+	}
+	if code != http.StatusOK {
+		return StatusMessage{}, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
 	if err = json.Unmarshal(raw, &resp); err != nil {
 		return StatusMessage{}, err

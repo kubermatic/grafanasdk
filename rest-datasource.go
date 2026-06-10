@@ -180,10 +180,17 @@ func (r *Client) DeleteDatasourceByUID(ctx context.Context, uid string) (StatusM
 	var (
 		raw   []byte
 		reply StatusMessage
+		code  int
 		err   error
 	)
-	if raw, _, err = r.delete(ctx, fmt.Sprintf("api/datasources/uid/%s", uid)); err != nil {
+	if raw, code, err = r.delete(ctx, fmt.Sprintf("api/datasources/uid/%s", uid)); err != nil {
 		return StatusMessage{}, err
+	}
+	if code == 404 {
+		return StatusMessage{}, ErrNotFound{Message: fmt.Sprintf("Datasource with UID %s not found", uid)}
+	}
+	if code != 200 {
+		return StatusMessage{}, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
 	err = json.Unmarshal(raw, &reply)
 	return reply, err

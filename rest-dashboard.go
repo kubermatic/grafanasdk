@@ -57,13 +57,13 @@ type BoardProperties struct {
 	FolderURL   string    `json:"folderUrl"`
 }
 
-//RawBoardRequest struct that wraps Board and parameters being sent
+// RawBoardRequest struct that wraps Board and parameters being sent
 type RawBoardRequest struct {
 	Dashboard  []byte
 	Parameters SetDashboardParams
 }
 
-//MarshalJSON serializes the request to match the expectations of the grafana API.
+// MarshalJSON serializes the request to match the expectations of the grafana API.
 // Additionally, if preseveID is false, then the dashboard id is set to 0
 func (d RawBoardRequest) MarshalJSON() ([]byte, error) {
 	var raw []byte
@@ -343,7 +343,7 @@ func (r *Client) SetDashboard(ctx context.Context, board Board, params SetDashbo
 	return resp, nil
 }
 
-//SetRawDashboardWithParam sends the serialized along with request parameters
+// SetRawDashboardWithParam sends the serialized along with request parameters
 func (r *Client) SetRawDashboardWithParam(ctx context.Context, request RawBoardRequest) (StatusMessage, error) {
 	var (
 		rawResp []byte
@@ -414,10 +414,17 @@ func (r *Client) DeleteDashboardByUID(ctx context.Context, uid string) (StatusMe
 	var (
 		raw   []byte
 		reply StatusMessage
+		code  int
 		err   error
 	)
-	if raw, _, err = r.delete(ctx, fmt.Sprintf("api/dashboards/uid/%s", uid)); err != nil {
+	if raw, code, err = r.delete(ctx, fmt.Sprintf("api/dashboards/uid/%s", uid)); err != nil {
 		return StatusMessage{}, err
+	}
+	if code == 404 {
+		return StatusMessage{}, ErrNotFound{Message: fmt.Sprintf("Dashboard with UID %s not found", uid)}
+	}
+	if code != 200 {
+		return StatusMessage{}, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
 	err = json.Unmarshal(raw, &reply)
 	return reply, err

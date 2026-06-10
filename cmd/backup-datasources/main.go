@@ -3,7 +3,8 @@
 // It really useful for Grafana backups!
 //
 // Usage:
-//   backup-dashboards http://sdk.host:3000 api-key-string-here
+//
+//	backup-dashboards http://sdk.host:3000 api-key-string-here
 package main
 
 /*

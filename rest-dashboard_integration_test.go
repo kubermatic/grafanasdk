@@ -118,6 +118,8 @@ func Test_Dashboard_CRUD_By_UID(t *testing.T) {
 }
 
 func Test_GetDashboardVersionsByDashboardID(t *testing.T) {
+	shouldSkip(t)
+
 	var (
 		board sdk.Board
 		err   error
