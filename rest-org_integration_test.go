@@ -2,11 +2,27 @@ package sdk_test
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 
 	sdk "github.com/kubermatic/grafanasdk"
 )
+
+func deleteOrgIfExists(t *testing.T, client *sdk.Client, ctx context.Context, oName string) {
+	t.Helper()
+	org, err := client.GetOrgByOrgName(ctx, oName)
+	if err != nil {
+		if errors.As(err, &sdk.ErrNotFound{}) {
+			return
+		}
+		t.Fatalf("failed to lookup org %q for cleanup: %s", oName, err)
+	}
+	_, err = client.DeleteOrg(ctx, org.ID)
+	if err != nil && !errors.As(err, &sdk.ErrNotFound{}) {
+		t.Fatalf("failed to delete org %q for cleanup: %s", oName, err)
+	}
+}
 
 func TestCreateDelete(t *testing.T) {
 	shouldSkip(t)
@@ -15,12 +31,13 @@ func TestCreateDelete(t *testing.T) {
 	ctx := context.Background()
 
 	oName := "coolorg"
+	deleteOrgIfExists(t, client, ctx, oName)
+
 	o := sdk.Org{Name: oName}
 	statusMessage, err := client.CreateOrg(ctx, o)
 	if err != nil {
 		t.Fatalf("failed to create an org: %v (%s)", statusMessage, err.Error())
 	}
-	t.Logf("got status message: %v\n", statusMessage)
 
 	oID := *statusMessage.OrgID
 
@@ -42,6 +59,9 @@ func TestCreateDelete(t *testing.T) {
 	if err == nil {
 		t.Fatalf("org %s is still there even though it should be deleted", o.Name)
 	}
+	if !errors.As(err, &sdk.ErrNotFound{}) {
+		t.Fatalf("expected ErrNotFound, got: %s", err.Error())
+	}
 }
 
 // TestUpdateOrgAddress checks if updating Org address works correctly
@@ -51,14 +71,25 @@ func TestUpdateOrgAddress(t *testing.T) {
 	client := getClient(t)
 	ctx := context.Background()
 
-	// Create a new organization
 	oName := "coolorg"
+	deleteOrgIfExists(t, client, ctx, oName)
+
+	// Create a new organization
 	o := sdk.Org{Name: oName}
 	statusMessage, err := client.CreateOrg(ctx, o)
 	if err != nil {
 		t.Fatalf("failed to create an org: %v (%s)", statusMessage, err.Error())
 	}
 	oID := *statusMessage.OrgID
+	t.Cleanup(func() {
+		// switch back to org 1 before deleting, otherwise subsequent tests
+		// run in a stale/deleted org context and get 403s
+		client.SwitchActualUserContext(ctx, 1)
+		_, err := client.DeleteOrg(ctx, oID)
+		if err != nil && !errors.As(err, &sdk.ErrNotFound{}) {
+			t.Errorf("failed to cleanup org %d: %s", oID, err)
+		}
+	})
 
 	// Test if updating organization by ID works as expected
 	// Create a dummy address object
