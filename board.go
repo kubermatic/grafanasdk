@@ -168,6 +168,7 @@ func (h *Height) UnmarshalJSON(raw []byte) error {
 
 func NewBoard(title string) *Board {
 	boardID++
+	lastPanelID = 0
 	return &Board{
 		ID:           boardID,
 		Title:        title,

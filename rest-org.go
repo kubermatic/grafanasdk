@@ -108,6 +108,9 @@ func (r *Client) GetOrgById(ctx context.Context, oid uint) (Org, error) {
 		return org, err
 	}
 
+	if code == http.StatusNotFound {
+		return org, ErrNotFound{Message: fmt.Sprintf("Org with ID %d not found", oid)}
+	}
 	if code != http.StatusOK {
 		return org, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
@@ -134,6 +137,9 @@ func (r *Client) GetOrgByOrgName(ctx context.Context, name string) (Org, error) 
 		return org, err
 	}
 
+	if code == http.StatusNotFound {
+		return org, ErrNotFound{Message: fmt.Sprintf("Org with name %s not found", name)}
+	}
 	if code != http.StatusOK {
 		return org, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
@@ -191,10 +197,17 @@ func (r *Client) DeleteOrg(ctx context.Context, oid uint) (StatusMessage, error)
 	var (
 		raw  []byte
 		resp StatusMessage
+		code int
 		err  error
 	)
-	if raw, _, err = r.delete(ctx, fmt.Sprintf("api/orgs/%d", oid)); err != nil {
+	if raw, code, err = r.delete(ctx, fmt.Sprintf("api/orgs/%d", oid)); err != nil {
 		return StatusMessage{}, err
+	}
+	if code == http.StatusNotFound {
+		return StatusMessage{}, ErrNotFound{Message: fmt.Sprintf("Org with ID %d not found", oid)}
+	}
+	if code != http.StatusOK {
+		return StatusMessage{}, fmt.Errorf("HTTP error %d: returns %s", code, raw)
 	}
 	if err = json.Unmarshal(raw, &resp); err != nil {
 		return StatusMessage{}, err

@@ -6,7 +6,8 @@
 // NOTE: old dashboards with same names will be silently overrided!
 //
 // Usage:
-//   import-dashboards http://grafana.host:3000 api-key-string-here
+//
+//	import-dashboards http://grafana.host:3000 api-key-string-here
 //
 // You need get API key with Admin rights from your Grafana!
 package main

@@ -3,6 +3,7 @@ package sdk_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"testing"
 
@@ -86,7 +87,10 @@ func Test_Dashboard_CRUD_By_UID(t *testing.T) {
 
 	//Cleanup if Already exists
 	if _, err = client.DeleteDashboardByUID(ctx, board.UID); err != nil {
-		t.Fatal(err)
+		var notFound sdk.ErrNotFound
+		if !errors.As(err, &notFound) {
+			t.Fatal(err)
+		}
 	}
 
 	params := sdk.SetDashboardParams{
@@ -118,6 +122,8 @@ func Test_Dashboard_CRUD_By_UID(t *testing.T) {
 }
 
 func Test_GetDashboardVersionsByDashboardID(t *testing.T) {
+	shouldSkip(t)
+
 	var (
 		board sdk.Board
 		err   error
@@ -133,7 +139,10 @@ func Test_GetDashboardVersionsByDashboardID(t *testing.T) {
 	}
 	board.UID = "1234"
 	if _, err = client.DeleteDashboardByUID(ctx, board.UID); err != nil {
-		t.Fatal(err)
+		var notFound sdk.ErrNotFound
+		if !errors.As(err, &notFound) {
+			t.Fatal(err)
+		}
 	}
 
 	params := sdk.SetDashboardParams{
