@@ -36,4 +36,5 @@ type Folder struct {
 	Updated   string `json:"updated"`
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
+	ParentUID string `json:"parentUid"`
 }
